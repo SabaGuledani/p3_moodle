@@ -84,11 +84,22 @@ int main(int argc, char** argv)
         print_help()
     }
 
+    FSIVParams params;
+    params.camera = parser.get<int>("camera");
+    params.video = parser.get<std::string>("video");
+    params.rows = parser.get<int>("rows");
+    params.cols = parser.get<int>("cols");
+    params.square = parser.get<float>("square");
+
+
     // Open input (camera or video)
     cv::VideoCapture cap;
-
-
-//    fsiv_create_chessboard_3d_points(pattern_size, (float)square_size, obj_pts);
+    // create the 3D points for the chessboard
+    // first create pattern size from rows and cols parameters
+    cv::Size pattern_size(params.cols, params.rows);
+    // create empty vector of 3d points
+    std::vector<cv::Point3f> obj_pts;
+    fsiv_create_chessboard_3d_points(pattern_size, (float)square_size, obj_pts);
 
 
     for (;;)
@@ -105,10 +116,10 @@ int main(int argc, char** argv)
         {
             // TODO: useful functions
 
-  //                bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners_tmp, true);
+            bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners_tmp, true);
   
-  //                cv::drawChessboardCorners(display, pattern_size, corners_tmp, found);
-    
+            cv::drawChessboardCorners(frame, pattern_size, corners_tmp, found);
+            cv::imshow("Calibration", frame);
   //              bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners, false);
 
   /*

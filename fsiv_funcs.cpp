@@ -40,7 +40,7 @@ bool fsiv_find_chessboard_corners(const cv::Mat& image,
     {
         cv::cornerSubPix(image, corners, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.1));
     }
-    cv::drawChessboardCorners(image, pattern_size, corners, found);
+
     return found;
 }
 
