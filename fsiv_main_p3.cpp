@@ -147,18 +147,6 @@ int main(int argc, char** argv)
   
             cv::drawChessboardCorners(frame, pattern_size, corners_tmp, found);
             
-            // Add text overlay to show detection status
-            std::string status = found ? "Corners FOUND" : "Corners NOT found";
-            cv::putText(frame, status, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.7, 
-                       found ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255), 2);
-            
-            cv::imshow("Calibration", frame);
-            
-            // For video files, wait longer to match frame rate; for cameras, wait 1ms
-            
-            int key = cv::waitKey() & 0xFF;
-            if (key == 27) break; // ESC to exit
-  //              bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners, false);
 
   /*
                 double rms = fsiv_calibrate_camera(all_object_points, all_image_points,
