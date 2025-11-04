@@ -35,7 +35,7 @@ bool fsiv_find_chessboard_corners(const cv::Mat& image,
 {
 
     // set flags for chessboard detection if fast_preview is true
-    int flags = 0;
+     int flags = cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_NORMALIZE_IMAGE;
     if (fast_preview)
     {
         flags = cv::CALIB_CB_FAST_CHECK;
