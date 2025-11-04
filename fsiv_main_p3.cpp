@@ -119,7 +119,12 @@ int main(int argc, char** argv)
             return 1;
         }
     }
-
+    std::vector<std::vector<cv::Point3f>> object_points_list;
+    std::vector<std::vector<cv::Point2f>> image_points_list;
+    cv::Mat camera_matrix;
+    cv::Mat dist_coeffs;
+    std::vector<cv::Mat> rvecs, tvecs;
+    bool draw_corners = false;
     for (;;)
     {
         cv::Mat frame;
@@ -135,17 +140,56 @@ int main(int argc, char** argv)
             // make frame grayscale
             cv::Mat gray;
             cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+
             // create the 3D points for the chessboard
             // first create pattern size from rows and cols parameters
             cv::Size pattern_size(params.cols-1, params.rows-1);
-            // create empty vector of 3d points
-            // std::vector<cv::Point3f> obj_pts;
-            // fsiv_create_chessboard_3d_points(pattern_size, params.square, obj_pts);
+
             // create empty vector corners_tmp
             std::vector<cv::Point2f> corners_tmp;
             bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners_tmp, true);
-  
-            cv::drawChessboardCorners(frame, pattern_size, corners_tmp, found);
+            // if found and draw corners are true use drawChessboardCorners method
+            if(draw_corners && found){
+                cv::drawChessboardCorners(frame, pattern_size, corners_tmp, found);
+            }
+            int key = cv::waitKey(params.use_video ? 30 : 1) & 0xFF;
+            if key( == 27){ //ESC: exit
+                break;
+            }else if (key == ' ' && found) {  // SPACE: store view
+                // Refine corners with subpix accuracy
+                std::vector<cv::Point2f> refined_corners = corners_tmp;
+                if (!refined_corners.empty()) {
+                    cv::Mat gray_for_refine;
+                    cvtColor(frame, gray_for_refine, cv::COLOR_BGR2GRAY);
+                    cv::TermCriteria criteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.001);
+                    cv::cornerSubPix(gray_for_refine, refined_corners, cv::Size(11, 11), cv::Size(-1, -1), criteria);
+                }
+                
+                // Store this view
+                object_points_list.push_back(object_points);  // Same 3D points for all views
+                image_points_list.push_back(refined_corners);  // Different 2D corners per view
+                
+                std::cout << "Stored view " << object_points_list.size() << std::endl;
+            }else if (key == 'd') {  // press d and toggle corner drawing
+                draw_corners = !draw_corners;
+            }else if (key == 'c') {  // press c and run calibration
+                if (object_points_list.size() < 8){
+                    std::cerr << "calibration needs at least 8 views, current views: " << object_points_list.size() << std::endl;
+
+                }else{
+                    cv::Size img_size = frame.size();
+
+                    //calibration
+                    double rms = fsiv_calibrate_camera(object_points_list, image_points_list,
+                                                        img_size, camera_matrix, dist_coeffs, rvecs, tvecs);
+
+                    
+                }
+
+
+
+            
+            
 
   /*
                 double rms = fsiv_calibrate_camera(all_object_points, all_image_points,

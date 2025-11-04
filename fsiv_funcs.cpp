@@ -57,14 +57,32 @@ bool fsiv_find_chessboard_corners(const cv::Mat& image,
     return found;
 }
 
-// double fsiv_calibrate_camera(const std::vector<std::vector<cv::Point3f> >& object_points_list,
-//                              const std::vector<std::vector<cv::Point2f> >& image_points_list,
-//                              const cv::Size& image_size,
-//                              cv::Mat& camera_matrix, cv::Mat& dist_coeffs,
-//                              std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs)
-// {
-//     ;
-// }
+
+double fsiv_calibrate_camera(const std::vector<std::vector<cv::Point3f> >& object_points_list,
+                             const std::vector<std::vector<cv::Point2f> >& image_points_list,
+                             const cv::Size& image_size,
+                             cv::Mat& camera_matrix, cv::Mat& dist_coeffs,
+                             std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs)
+{
+    // intialize camera matrix and dist_coeffs to identuty and zeros matrxies
+    camera_matrix = cv::Mat::eye(3, 3, CV_64F);
+    dist_coeffs = cv::Mat::zeros(5, 1, CV_64F);
+    // intialize flags to 0
+    int flags = 0;
+    // run calibration method
+    double rms = cv::calibrateCamera(
+        object_points_list,  // 3D points for each view
+        image_points_list,   // 2D corners for each view
+        image_size,          // Image dimensions
+        camera_matrix,       // Output: intrinsic matrix
+        dist_coeffs,         // Output: distortion coefficients
+        rvecs,               // Output: rotation vectors (one per view)
+        tvecs,               // Output: translation vectors (one per view)
+        flags                // Calibration flags
+    );
+    return rms;
+    
+}
 
 // double fsiv_compute_reprojection_error(const std::vector<std::vector<cv::Point3f> >& object_points_list,
 //                                        const std::vector<std::vector<cv::Point2f> >& image_points_list,
