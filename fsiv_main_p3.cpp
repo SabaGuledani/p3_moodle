@@ -70,8 +70,8 @@ int main(int argc, char** argv)
         "{help h ? |       | Show help }"
         "{camera   |       | Open a camera index }"
         "{video    |       | Open a video file instead of a live camera }"
-        "{rows     |  6    | Number of inner rows of the chessboard }"
-        "{cols     |  9    | Number of inner columns of the chessboard }"
+        "{rows     |  5    | Number of inner rows of the chessboard }"
+        "{cols     |  6    | Number of inner columns of the chessboard }"
         "{square   |  25.0 | Square size in user units. Must be > 0 }"
         "{calibrate|       | Enable calibration mode }"
         "{out      |  camera_params.yml  | Output path for calibration file }"
@@ -155,8 +155,8 @@ int main(int argc, char** argv)
             cv::imshow("Calibration", frame);
             
             // For video files, wait longer to match frame rate; for cameras, wait 1ms
-            int delay = params.use_video ? 30 : 1;
-            int key = cv::waitKey(delay) & 0xFF;
+            
+            int key = cv::waitKey() & 0xFF;
             if (key == 27) break; // ESC to exit
   //              bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners, false);
 
@@ -174,12 +174,7 @@ int main(int argc, char** argv)
         }
         else // AR mode
         {
-            cv::imshow("AR", frame);
-            // For video files, wait longer to match frame rate; for cameras, wait 1ms
-            int delay = params.use_video ? 30 : 1;
-            int key = cv::waitKey(delay) & 0xFF;
-            if (key == 27) break; // ESC to exit
-
+            
 //                fsiv_prepare_undistort_maps(camera_matrix, dist_coeffs, image_size, map1, map2);
 
 //            fsiv_undistort_with_maps(frame, undist, map1, map2);
