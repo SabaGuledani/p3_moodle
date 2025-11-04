@@ -1,4 +1,5 @@
 build/
+logitech/
 *.jpg
 *.txt
 *.json

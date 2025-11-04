@@ -11,6 +11,19 @@
 
 #include <vector>
 #include <opencv2/core.hpp>
+struct FSIVParams
+{
+    int camera = 0;
+    std::string video = "";
+    int rows = 6;
+    int cols = 9;
+    float square = 25.0f;
+    bool calibrate = false;
+    std::string out = "camera_params.yml";
+    bool run = false;
+    std::string params = "";
+    std::string draw = "axes";
+};
 
 /**
  * @brief Create the 3D points (object points) for a planar chessboard pattern.
