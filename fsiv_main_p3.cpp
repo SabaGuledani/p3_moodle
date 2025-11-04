@@ -146,7 +146,7 @@ int main(int argc, char** argv)
             bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners_tmp, true);
   
             cv::drawChessboardCorners(frame, pattern_size, corners_tmp, found);
-            
+            cv::imshow("Calibration", frame);
 
   /*
                 double rms = fsiv_calibrate_camera(all_object_points, all_image_points,
