@@ -177,6 +177,13 @@ int main(int argc, char** argv)
 //                        fsiv_draw_axes(undist, camera_matrix, dist_coeffs, rvec, tvec, (float)square_size*2.0f);
 
         }
+        cv::imshow("FSIV P3", frame);
+        
+        // Wait for key press (30ms delay for video, 1ms for camera)
+        // ESC key (27) will exit
+        if (cv::waitKey(params.use_video ? 30 : 1) == 27) {
+            break;
+        }
     }
 
     cap.release();
