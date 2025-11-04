@@ -137,7 +137,7 @@ int main(int argc, char** argv)
             cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
             // create the 3D points for the chessboard
             // first create pattern size from rows and cols parameters
-            cv::Size pattern_size(params.cols, params.rows);
+            cv::Size pattern_size(params.cols-1, params.rows-1);
             // create empty vector of 3d points
             // std::vector<cv::Point3f> obj_pts;
             // fsiv_create_chessboard_3d_points(pattern_size, params.square, obj_pts);
@@ -146,7 +146,6 @@ int main(int argc, char** argv)
             bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners_tmp, true);
   
             cv::drawChessboardCorners(frame, pattern_size, corners_tmp, found);
-            cv::imshow("Calibration", frame);
 
   /*
                 double rms = fsiv_calibrate_camera(all_object_points, all_image_points,
