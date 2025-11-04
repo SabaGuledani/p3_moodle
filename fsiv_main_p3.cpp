@@ -139,8 +139,8 @@ int main(int argc, char** argv)
             // first create pattern size from rows and cols parameters
             cv::Size pattern_size(params.cols, params.rows);
             // create empty vector of 3d points
-            std::vector<cv::Point3f> obj_pts;
-            fsiv_create_chessboard_3d_points(pattern_size, params.square, obj_pts);
+            // std::vector<cv::Point3f> obj_pts;
+            // fsiv_create_chessboard_3d_points(pattern_size, params.square, obj_pts);
             // create empty vector corners_tmp
             std::vector<cv::Point2f> corners_tmp;
             bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners_tmp, true);
