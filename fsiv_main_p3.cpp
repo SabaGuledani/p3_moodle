@@ -92,12 +92,34 @@ int main(int argc, char** argv)
     params.cols = parser.get<int>("cols");
     params.square = parser.get<float>("square");
     params.calibrate = parser.has("calibrate");
+    params.out = parser.get<std::string>("out");
+    params.run = parser.has("run");
+    params.params = parser.get<std::string>("params");
+    params.draw = parser.get<std::string>("draw");
+
+    // Validate arguments
+    if (!params.calibrate && !params.run) {
+        std::cerr << "Error: Must specify either --calibrate or --run mode." << std::endl;
+        print_help();
+        return 1;
+    }
 
     // Open input (camera or video)
-    
-    
-
     cv::VideoCapture cap;
+    if (params.use_video) {
+        cap.open(params.video);
+        if (!cap.isOpened()) {
+            std::cerr << "Error: Could not open video file: " << params.video << std::endl;
+            return 1;
+        }
+    } else {
+        cap.open(params.camera);
+        if (!cap.isOpened()) {
+            std::cerr << "Error: Could not open camera " << params.camera << std::endl;
+            return 1;
+        }
+    }
+
     for (;;)
     {
         cv::Mat frame;
@@ -125,6 +147,9 @@ int main(int argc, char** argv)
   
             cv::drawChessboardCorners(frame, pattern_size, corners_tmp, found);
             cv::imshow("Calibration", frame);
+            
+            int key = cv::waitKey(1) & 0xFF;
+            if (key == 27) break; // ESC to exit
   //              bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners, false);
 
   /*
@@ -141,6 +166,9 @@ int main(int argc, char** argv)
         }
         else // AR mode
         {
+            cv::imshow("AR", frame);
+            int key = cv::waitKey(1) & 0xFF;
+            if (key == 27) break; // ESC to exit
 
 //                fsiv_prepare_undistort_maps(camera_matrix, dist_coeffs, image_size, map1, map2);
 
@@ -158,5 +186,7 @@ int main(int argc, char** argv)
         }
     }
 
+    cap.release();
+    cv::destroyAllWindows();
     return 0;
 }
