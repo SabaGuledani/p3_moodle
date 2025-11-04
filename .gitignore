@@ -1,0 +1,8 @@
+build/
+*.jpg
+*.txt
+*.json
+*.png
+*.xml
+*.avi
+*.mp4
