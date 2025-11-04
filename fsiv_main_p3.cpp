@@ -81,41 +81,46 @@ int main(int argc, char** argv)
     cv::CommandLineParser parser(argc, argv, keys);
     parser.about("FSIV Practical XXX");
     if (parser.has("help") || !parser.check()) {
-        print_help()
+        print_help();
     }
 
     FSIVParams params;
     params.camera = parser.get<int>("camera");
     params.video = parser.get<std::string>("video");
+    params.use_video = parser.has("video");
     params.rows = parser.get<int>("rows");
     params.cols = parser.get<int>("cols");
     params.square = parser.get<float>("square");
-
+    params.calibrate = parser.has("calibrate");
 
     // Open input (camera or video)
+    
+    
+
     cv::VideoCapture cap;
-    // create the 3D points for the chessboard
-    // first create pattern size from rows and cols parameters
-    cv::Size pattern_size(params.cols, params.rows);
-    // create empty vector of 3d points
-    std::vector<cv::Point3f> obj_pts;
-    fsiv_create_chessboard_3d_points(pattern_size, (float)square_size, obj_pts);
-
-
     for (;;)
     {
         cv::Mat frame;
         if (!cap.read(frame) || frame.empty())
         {
             // End of file or camera error.
-            if (use_video) break;
+            if (params.use_video) break;
             else continue; // try again for cameras
         }
 
-        if (do_calibrate)
+        if (params.calibrate)
         {
-            // TODO: useful functions
-
+            // make frame grayscale
+            cv::Mat gray;
+            cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+            // create the 3D points for the chessboard
+            // first create pattern size from rows and cols parameters
+            cv::Size pattern_size(params.cols, params.rows);
+            // create empty vector of 3d points
+            std::vector<cv::Point3f> obj_pts;
+            fsiv_create_chessboard_3d_points(pattern_size, params.square, obj_pts);
+            // create empty vector corners_tmp
+            std::vector<cv::Point2f> corners_tmp;
             bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners_tmp, true);
   
             cv::drawChessboardCorners(frame, pattern_size, corners_tmp, found);

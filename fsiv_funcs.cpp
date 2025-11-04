@@ -25,7 +25,6 @@ void fsiv_create_chessboard_3d_points(const cv::Size& pattern_size,
             object_points.push_back(cv::Point3f(col * square_size, row * square_size, 0.0f));
         }
     }
-    return true;
 
 }
 

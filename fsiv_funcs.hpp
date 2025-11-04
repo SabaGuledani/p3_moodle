@@ -15,6 +15,7 @@ struct FSIVParams
 {
     int camera = 0;
     std::string video = "";
+    bool use_video = false;
     int rows = 6;
     int cols = 9;
     float square = 25.0f;
