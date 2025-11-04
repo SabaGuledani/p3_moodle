@@ -146,9 +146,17 @@ int main(int argc, char** argv)
             bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners_tmp, true);
   
             cv::drawChessboardCorners(frame, pattern_size, corners_tmp, found);
+            
+            // Add text overlay to show detection status
+            std::string status = found ? "Corners FOUND" : "Corners NOT found";
+            cv::putText(frame, status, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 0.7, 
+                       found ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 0, 255), 2);
+            
             cv::imshow("Calibration", frame);
             
-            int key = cv::waitKey(1) & 0xFF;
+            // For video files, wait longer to match frame rate; for cameras, wait 1ms
+            int delay = params.use_video ? 30 : 1;
+            int key = cv::waitKey(delay) & 0xFF;
             if (key == 27) break; // ESC to exit
   //              bool found = fsiv_find_chessboard_corners(gray, pattern_size, corners, false);
 
@@ -167,7 +175,9 @@ int main(int argc, char** argv)
         else // AR mode
         {
             cv::imshow("AR", frame);
-            int key = cv::waitKey(1) & 0xFF;
+            // For video files, wait longer to match frame rate; for cameras, wait 1ms
+            int delay = params.use_video ? 30 : 1;
+            int key = cv::waitKey(delay) & 0xFF;
             if (key == 27) break; // ESC to exit
 
 //                fsiv_prepare_undistort_maps(camera_matrix, dist_coeffs, image_size, map1, map2);
