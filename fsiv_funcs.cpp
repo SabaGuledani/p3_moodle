@@ -34,7 +34,14 @@ bool fsiv_find_chessboard_corners(const cv::Mat& image,
                                   std::vector<cv::Point2f>& corners,
                                   bool fast_preview)
 {
-    ;
+    corners.clear();
+    bool found = cv::findChessboardCorners(image, pattern_size, corners, cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FAST_CHECK);
+    if (found && !fast_preview)
+    {
+        cv::cornerSubPix(image, corners, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::MAX_ITER, 30, 0.1));
+    }
+    cv::drawChessboardCorners(image, pattern_size, corners, found);
+    return found;
 }
 
 double fsiv_calibrate_camera(const std::vector<std::vector<cv::Point3f> >& object_points_list,
