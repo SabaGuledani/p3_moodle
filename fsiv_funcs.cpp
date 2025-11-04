@@ -17,7 +17,16 @@ void fsiv_create_chessboard_3d_points(const cv::Size& pattern_size,
                                       float square_size,
                                       std::vector<cv::Point3f>& object_points)
 {
-    ;
+    object_points.clear();
+    for (int row = 0; row < pattern_size.height; ++row)
+    {
+        for (int col = 0; col < pattern_size.width; ++col)
+        {
+            object_points.push_back(cv::Point3f(col * square_size, row * square_size, 0.0f));
+        }
+    }
+    return true;
+
 }
 
 bool fsiv_find_chessboard_corners(const cv::Mat& image,
