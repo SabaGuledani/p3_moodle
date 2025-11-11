@@ -201,9 +201,9 @@ int main(int argc, char** argv)
 
                     // Save calibration to file
                     if (fsiv_save_calibration(params.out, camera_matrix, dist_coeffs, img_size, mean_error)) {
-                    std::cout << "Calibration saved to: " << params.out << std::endl;
+                        std::cout << "Calibration saved to: " << params.out << std::endl;
                     } else {
-                    std::cerr << "Error: Failed to save calibration to " << params.out << std::endl;
+                        std::cerr << "Error: Failed to save calibration to " << params.out << std::endl;
                     }
 
 

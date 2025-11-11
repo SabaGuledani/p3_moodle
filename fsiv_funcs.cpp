@@ -85,27 +85,110 @@ double fsiv_calibrate_camera(const std::vector<std::vector<cv::Point3f> >& objec
 }
 
 double fsiv_compute_reprojection_error(const std::vector<std::vector<cv::Point3f> >& object_points_list,
-                                       const std::vector<std::vector<cv::Point2f> >& image_points_list,
-                                       const std::vector<cv::Mat>& rvecs,
-                                       const std::vector<cv::Mat>& tvecs,
-                                       const cv::Mat& K, const cv::Mat& dist)
+    const std::vector<std::vector<cv::Point2f> >& image_points_list,
+    const std::vector<cv::Mat>& rvecs,
+    const std::vector<cv::Mat>& tvecs,
+    const cv::Mat& K, const cv::Mat& dist)
 {
-    ;
+    double total_error = 0.0;
+    int total_points = 0;
+
+    // iterate over all views
+    for (size_t i = 0; i < object_points_list.size(); ++i){
+        // we project 3D object points to 2D image points using the calibrated parameters
+        std::vector<cv::Point2f> projected_points;
+        cv::projectPoints(object_points_list[i], rvecs[i], tvecs[i], K, dist, projected_points);
+
+        // then compute the error between projected and actual image points
+        const std::vector<cv::Point2f>& actual_points = image_points_list[i];
+
+        // sum the Euclidean distances for all points in this view
+        for (size_t j = 0; j < projected_points.size(); ++j){
+            cv::Point2f diff = projected_points[j] - actual_points[j];
+            double error = cv::norm(diff);  // euclidean distance
+            total_error += error * error;  // sum of squared errors
+            }
+
+        total_points += static_cast<int>(projected_points.size());
+    }
+
+    // return RMS
+    if (total_points > 0){
+        return std::sqrt(total_error / total_points);
+    }
+    return 0.0;
 }
 
-// bool fsiv_save_calibration(const std::string& path,
-//                            const cv::Mat& K, const cv::Mat& dist,
-//                            const cv::Size& image_size,
-//                            double reproj_error)
-// {
-// ;
-// }
+bool fsiv_save_calibration(const std::string& path,
+    const cv::Mat& K, const cv::Mat& dist,
+    const cv::Size& image_size,
+    double reproj_error)
+    {
+    // open file (.yaml or .xml)
+    cv::FileStorage fs(path, cv::FileStorage::WRITE);
 
-// bool fsiv_load_calibration(const std::string& path,
-//                            cv::Mat& K, cv::Mat& dist)
-// {
-// ;
-// }
+    if (!fs.isOpened())
+    {
+        std::cerr << "Error: Could not open file for writing: " << path << std::endl;
+        return false;
+    }
+
+    // write fields
+    fs << "image_width" << image_size.width;
+    fs << "image_height" << image_size.height;
+    fs << "camera_matrix" << K;
+    fs << "distortion_coefficients" << dist;
+    fs << "error" << reproj_error;
+
+    // close the file
+    fs.release();
+
+    return true;
+}
+
+bool fsiv_load_calibration(const std::string& path,
+    cv::Mat& K, cv::Mat& dist)
+{
+    // open file (.yaml or .xml)
+    cv::FileStorage fs(path, cv::FileStorage::READ);
+
+    if (!fs.isOpened())
+    {
+        std::cerr << "Error: Could not open file for reading: " << path << std::endl;
+        return false;
+    }
+
+    // read camera matrix and distortion coefficients
+    fs["camera_matrix"] >> K;
+    fs["distortion_coefficients"] >> dist;
+
+    // Close the file
+    fs.release();
+
+    //////data validation//////
+
+    // validate that data was loaded correctly
+    if (K.empty() || dist.empty())
+    {
+        std::cerr << "Error: Failed to load calibration data from " << path << std::endl;
+        return false;
+    }
+
+    // validate dimensions
+    if (K.rows != 3 || K.cols != 3)
+    {
+        std::cerr << "Error: Invalid camera matrix dimensions (expected 3x3)" << std::endl;
+        return false;
+    }
+    // validate distortion coefficients
+    if (dist.rows != 1 || (dist.cols != 5 && dist.cols != 1))
+    {
+        std::cerr << "Error: Invalid distortion coefficients dimensions (expected 1x5 or 5x1)" << std::endl;
+        return false;
+    }
+
+    return true;
+}
 
 // void fsiv_prepare_undistort_maps(const cv::Mat& K, const cv::Mat& dist,
 //                                  const cv::Size& image_size,
