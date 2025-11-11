@@ -125,6 +125,14 @@ int main(int argc, char** argv)
     cv::Mat dist_coeffs;
     std::vector<cv::Mat> rvecs, tvecs;
     bool draw_corners = false;
+
+    // Create pattern size and 3D object points (same for all views)
+    cv::Size pattern_size(params.cols-1, params.rows-1);
+    std::vector<cv::Point3f> object_points;
+    if (params.calibrate) {
+        fsiv_create_chessboard_3d_points(pattern_size, params.square, object_points);
+    }
+    
     for (;;)
     {
         cv::Mat frame;
@@ -153,7 +161,7 @@ int main(int argc, char** argv)
                 cv::drawChessboardCorners(frame, pattern_size, corners_tmp, found);
             }
             int key = cv::waitKey(params.use_video ? 30 : 1) & 0xFF;
-            if key( == 27){ //ESC: exit
+            if (key == 27){ //ESC: exit
                 break;
             }else if (key == ' ' && found) {  // SPACE: store view
                 // Refine corners with subpix accuracy
@@ -182,13 +190,32 @@ int main(int argc, char** argv)
                     //calibration
                     double rms = fsiv_calibrate_camera(object_points_list, image_points_list,
                                                         img_size, camera_matrix, dist_coeffs, rvecs, tvecs);
+                    // Compute reprojection error
+                    double mean_error = fsiv_compute_reprojection_error(object_points_list, image_points_list,
+                        rvecs, tvecs, camera_matrix, dist_coeffs);
+
+                    // Print calibration results
+                    std::cout << "Calibration completed!" << std::endl;
+                    std::cout << "RMS error: " << rms << std::endl;
+                    std::cout << "Mean reprojection error: " << mean_error << std::endl;
+
+                    // Save calibration to file
+                    if (fsiv_save_calibration(params.out, camera_matrix, dist_coeffs, img_size, mean_error)) {
+                    std::cout << "Calibration saved to: " << params.out << std::endl;
+                    } else {
+                    std::cerr << "Error: Failed to save calibration to " << params.out << std::endl;
+                    }
+
 
                     
                 }
 
+            }else if (key == 'r') {  // Reset stored views
+                object_points_list.clear();
+                image_points_list.clear();
+                std::cout << "Reset: cleared all stored views" << std::endl;
+            }
 
-
-            
             
 
   /*

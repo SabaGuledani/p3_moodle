@@ -84,14 +84,14 @@ double fsiv_calibrate_camera(const std::vector<std::vector<cv::Point3f> >& objec
     
 }
 
-// double fsiv_compute_reprojection_error(const std::vector<std::vector<cv::Point3f> >& object_points_list,
-//                                        const std::vector<std::vector<cv::Point2f> >& image_points_list,
-//                                        const std::vector<cv::Mat>& rvecs,
-//                                        const std::vector<cv::Mat>& tvecs,
-//                                        const cv::Mat& K, const cv::Mat& dist)
-// {
-//     ;
-// }
+double fsiv_compute_reprojection_error(const std::vector<std::vector<cv::Point3f> >& object_points_list,
+                                       const std::vector<std::vector<cv::Point2f> >& image_points_list,
+                                       const std::vector<cv::Mat>& rvecs,
+                                       const std::vector<cv::Mat>& tvecs,
+                                       const cv::Mat& K, const cv::Mat& dist)
+{
+    ;
+}
 
 // bool fsiv_save_calibration(const std::string& path,
 //                            const cv::Mat& K, const cv::Mat& dist,
