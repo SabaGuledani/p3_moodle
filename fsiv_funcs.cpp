@@ -64,21 +64,21 @@ double fsiv_calibrate_camera(const std::vector<std::vector<cv::Point3f> >& objec
                              cv::Mat& camera_matrix, cv::Mat& dist_coeffs,
                              std::vector<cv::Mat>& rvecs, std::vector<cv::Mat>& tvecs)
 {
-    // intialize camera matrix and dist_coeffs to identuty and zeros matrxies
+    // intialize camera matrix and dist_coeffs to identuty and zeros matrixes
     camera_matrix = cv::Mat::eye(3, 3, CV_64F);
     dist_coeffs = cv::Mat::zeros(5, 1, CV_64F);
     // intialize flags to 0
     int flags = 0;
     // run calibration method
     double rms = cv::calibrateCamera(
-        object_points_list,  // 3D points for each view
-        image_points_list,   // 2D corners for each view
-        image_size,          // Image dimensions
-        camera_matrix,       // Output: intrinsic matrix
-        dist_coeffs,         // Output: distortion coefficients
-        rvecs,               // Output: rotation vectors (one per view)
-        tvecs,               // Output: translation vectors (one per view)
-        flags                // Calibration flags
+        object_points_list,  // 3d points for each view
+        image_points_list,   // 2d corners for each view
+        image_size,          // image dimensions
+        camera_matrix,       // intrinsic matrix
+        dist_coeffs,         // distortion coefficients
+        rvecs,               // rotation vectors (one per view)
+        tvecs,               // translation vectors (one per view)
+        flags                // calibration flags
     );
     return rms;
     
@@ -102,7 +102,7 @@ double fsiv_compute_reprojection_error(const std::vector<std::vector<cv::Point3f
         // then compute the error between projected and actual image points
         const std::vector<cv::Point2f>& actual_points = image_points_list[i];
 
-        // sum the Euclidean distances for all points in this view
+        // sum the euclidean distances for all points in this view
         for (size_t j = 0; j < projected_points.size(); ++j){
             cv::Point2f diff = projected_points[j] - actual_points[j];
             double error = cv::norm(diff);  // euclidean distance
@@ -112,7 +112,7 @@ double fsiv_compute_reprojection_error(const std::vector<std::vector<cv::Point3f
         total_points += static_cast<int>(projected_points.size());
     }
 
-    // return RMS
+    // return RMS of reprojection error
     if (total_points > 0){
         return std::sqrt(total_error / total_points);
     }
@@ -180,12 +180,7 @@ bool fsiv_load_calibration(const std::string& path,
         std::cerr << "Error: Invalid camera matrix dimensions (expected 3x3)" << std::endl;
         return false;
     }
-    // // validate distortion coefficients
-    // if (dist.rows != 1 || (dist.cols != 5 && dist.cols != 1))
-    // {
-    //     std::cerr << "Error: Invalid distortion coefficients dimensions (expected 1x5 or 5x1)" << std::endl;
-    //     return false;
-    // }
+
 
     return true;
 }
@@ -194,10 +189,9 @@ void fsiv_prepare_undistort_maps(const cv::Mat& K, const cv::Mat& dist,
     const cv::Size& image_size,
     cv::Mat& map1, cv::Mat& map2)
     {
-    // precompute undistortion and rectification maps for fast remap()
-    // this is more efficient than cv::undistort() for real-time applications
-    cv::Mat R = cv::Mat::eye(3, 3, CV_64F);  // identity rotation matrix (no rectification)
-    cv::Mat new_K = K;  // use the same camera matrix (or can optimize it)
+    // precompute undistortion and rectification maps for remap()
+    cv::Mat R = cv::Mat::eye(3, 3, CV_64F);  // identity rotation matrix
+    cv::Mat new_K = K;  // use the same camera matrix
 
     cv::initUndistortRectifyMap(K, dist, R, new_K, image_size, 
     CV_16SC2, map1, map2);
@@ -206,7 +200,7 @@ void fsiv_prepare_undistort_maps(const cv::Mat& K, const cv::Mat& dist,
 void fsiv_undistort_with_maps(const cv::Mat& src, cv::Mat& dst,
                               const cv::Mat& map1, const cv::Mat& map2)
     {
-        // apply undistortion using precomputed maps (faster than cv::undistort())
+        // apply undistortion 
         cv::remap(src, dst, map1, map2, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
     }
 
@@ -215,14 +209,12 @@ bool fsiv_estimate_pose(const std::vector<cv::Point3f>& object_points,
                         const cv::Mat& K, const cv::Mat& dist,
                         cv::Mat& rvec, cv::Mat& tvec)
 {
-    // Check that we have enough points (at least 4 for PnP)
+    // check that we have enough points
     if (object_points.size() < 4 || object_points.size() != image_points.size())
     {
         return false;
     }
 
-    // Use solvePnP to estimate camera pose relative to the object
-    // SOLVEPNP_ITERATIVE is a good default method
     bool success = cv::solvePnP(object_points, image_points, K, dist, rvec, tvec,
                                 false, cv::SOLVEPNP_ITERATIVE);
 
@@ -232,64 +224,63 @@ bool fsiv_estimate_pose(const std::vector<cv::Point3f>& object_points,
 void fsiv_draw_axes(cv::Mat& image, const cv::Mat& K, const cv::Mat& dist,
     const cv::Mat& rvec, const cv::Mat& tvec, float axis_length)
 {
-    // Define 3D points for the coordinate axes
-    // Origin at (0,0,0), then points along each axis
+    // define 3d points for the coordinate axes
+    // origin at 0,0,0, then points along each axis
     std::vector<cv::Point3f> axis_points;
-    axis_points.push_back(cv::Point3f(0, 0, 0));                    // Origin
-    axis_points.push_back(cv::Point3f(axis_length, 0, 0));          // X axis (red)
-    axis_points.push_back(cv::Point3f(0, axis_length, 0));          // Y axis (green)
-    axis_points.push_back(cv::Point3f(0, 0, -axis_length));         // Z axis (blue, negative Z toward camera)
+    axis_points.push_back(cv::Point3f(0, 0, 0));                    // origin
+    axis_points.push_back(cv::Point3f(axis_length, 0, 0));          // x axis (red)
+    axis_points.push_back(cv::Point3f(0, axis_length, 0));          // y axis (green)
+    axis_points.push_back(cv::Point3f(0, 0, -axis_length));         // z axis (blue)
 
-    // Project 3D points to 2D image coordinates
+    // project 3d points to 2d image coordinates
     std::vector<cv::Point2f> projected_points;
     cv::projectPoints(axis_points, rvec, tvec, K, dist, projected_points);
 
-    // Draw the axes as lines from origin
-    // X axis: red
+    // Draw the axes
+    // x: red
     cv::line(image, projected_points[0], projected_points[1], cv::Scalar(0, 0, 255), 3);
-    // Y axis: green
+    // y: green
     cv::line(image, projected_points[0], projected_points[2], cv::Scalar(0, 255, 0), 3);
-    // Z axis: blue
+    // z: blue
     cv::line(image, projected_points[0], projected_points[3], cv::Scalar(255, 0, 0), 3);
 }
 
 void fsiv_draw_cube(cv::Mat& image, const cv::Mat& K, const cv::Mat& dist,
     const cv::Mat& rvec, const cv::Mat& tvec, float square_size)
 {
-    // Define 8 vertices of the cube
-    // Base sits on first square (Z=0), height extends toward camera (negative Z)
+
     std::vector<cv::Point3f> cube_points;
 
-    // Base vertices (Z = 0)
+    // base points (z = 0)
     cube_points.push_back(cv::Point3f(0, 0, 0));                                    // 0: bottom-left-back
     cube_points.push_back(cv::Point3f(square_size, 0, 0));                          // 1: bottom-right-back
     cube_points.push_back(cv::Point3f(square_size, square_size, 0));               // 2: bottom-right-front
     cube_points.push_back(cv::Point3f(0, square_size, 0));                         // 3: bottom-left-front
 
-    // Top vertices (Z = -square_size, toward camera)
+    // top points (z = -square_size)
     cube_points.push_back(cv::Point3f(0, 0, -square_size));                         // 4: top-left-back
     cube_points.push_back(cv::Point3f(square_size, 0, -square_size));               // 5: top-right-back
     cube_points.push_back(cv::Point3f(square_size, square_size, -square_size));      // 6: top-right-front
     cube_points.push_back(cv::Point3f(0, square_size, -square_size));               // 7: top-left-front
 
-    // Project 3D points to 2D image coordinates
+    // project 3d points to 2d image coordinates
     std::vector<cv::Point2f> projected_points;
     cv::projectPoints(cube_points, rvec, tvec, K, dist, projected_points);
 
-    // Draw the 12 edges of the cube
-    // Base edges (Z=0)
+    // draw the 12 edges of the cube
+    // base edges (z=0)
     cv::line(image, projected_points[0], projected_points[1], cv::Scalar(255, 255, 255), 2);  // 0-1
     cv::line(image, projected_points[1], projected_points[2], cv::Scalar(255, 255, 255), 2);  // 1-2
     cv::line(image, projected_points[2], projected_points[3], cv::Scalar(255, 255, 255), 2);  // 2-3
     cv::line(image, projected_points[3], projected_points[0], cv::Scalar(255, 255, 255), 2);  // 3-0
 
-    // Top edges (Z=-square_size)
+    // top edges (z=-square_size)
     cv::line(image, projected_points[4], projected_points[5], cv::Scalar(255, 255, 255), 2);  // 4-5
     cv::line(image, projected_points[5], projected_points[6], cv::Scalar(255, 255, 255), 2);  // 5-6
     cv::line(image, projected_points[6], projected_points[7], cv::Scalar(255, 255, 255), 2);  // 6-7
     cv::line(image, projected_points[7], projected_points[4], cv::Scalar(255, 255, 255), 2);  // 7-4
 
-    // Vertical edges connecting base to top
+    // vertical edges connecting base to top
     cv::line(image, projected_points[0], projected_points[4], cv::Scalar(255, 255, 255), 2);  // 0-4
     cv::line(image, projected_points[1], projected_points[5], cv::Scalar(255, 255, 255), 2);  // 1-5
     cv::line(image, projected_points[2], projected_points[6], cv::Scalar(255, 255, 255), 2);  // 2-6

@@ -83,6 +83,7 @@ int main(int argc, char** argv)
     parser.about("FSIV Practical XXX");
     if (parser.has("help") || !parser.check()) {
         print_help();
+        return 1;
     }
 
     FSIVParams params;
@@ -98,14 +99,14 @@ int main(int argc, char** argv)
     params.params = parser.get<std::string>("params");
     params.draw = parser.get<std::string>("draw");
 
-    // Validate arguments
+    // validate arguments if user does not specify them
     if (!params.calibrate && !params.run) {
         std::cerr << "Error: Must specify either --calibrate or --run mode." << std::endl;
         print_help();
         return 1;
     }
 
-    // Open input (camera or video)
+    // open input (camera or video)
     cv::VideoCapture cap;
     if (params.use_video) {
         cap.open(params.video);
@@ -120,20 +121,21 @@ int main(int argc, char** argv)
             return 1;
         }
     }
-    std::vector<std::vector<cv::Point3f>> object_points_list;
-    std::vector<std::vector<cv::Point2f>> image_points_list;
+    // intialize variables for calibration mode
+    std::vector<std::vector<cv::Point3f>> object_points_list; // list of 3D object points
+    std::vector<std::vector<cv::Point2f>> image_points_list; // list of 2D image points
     cv::Mat camera_matrix;
     cv::Mat dist_coeffs;
-    std::vector<cv::Mat> rvecs, tvecs;
+    std::vector<cv::Mat> rvecs, tvecs; //rotation and translation vecttors 
     bool draw_corners = false;
 
-    // AR mode variables (declared here so they're accessible in the loop)
-    cv::Mat map1, map2;  // Undistort maps (prepared once, used many times)
-    cv::Mat rvec, tvec;   // Pose estimation vectors (rotation and translation)
-    bool draw_axes = false;   // Flag to draw axes overlay
-    bool draw_cube = false;   // Flag to draw cube overlay
+    // AR mode variables
+    cv::Mat map1, map2;  // Undistort maps
+    cv::Mat rvec, tvec;   //rotation and translation vecttors 
+    bool draw_axes = false;   // flag to draw axes overlay
+    bool draw_cube = false;   // flag to draw cube overlay
 
-    // Create pattern size and 3D object points (same for all views)
+    // create pattern size and 3D object points (same for all views)
     cv::Size pattern_size(params.cols, params.rows);
     std::vector<cv::Point3f> object_points;
     if (params.calibrate) {
@@ -141,7 +143,7 @@ int main(int argc, char** argv)
     }
     // AR mode initialization
     if (params.run) {
-        // Validate that calibration file path is provided
+        // validate that calibration file path is provided
         if (params.params.empty()) {
             std::cerr << "Error: AR mode requires --params=<file.yml> to load calibration parameters." << std::endl;
             print_help();
@@ -149,7 +151,7 @@ int main(int argc, char** argv)
             return 1;
         }
         
-        // Load calibration parameters from file
+        // load calibration parameters from file
         if (!fsiv_load_calibration(params.params, camera_matrix, dist_coeffs)) {
             std::cerr << "Error: Failed to load calibration from " << params.params << std::endl;
             cap.release();
@@ -158,16 +160,16 @@ int main(int argc, char** argv)
         
         std::cout << "Calibration loaded successfully from: " << params.params << std::endl;
 
-        // Create 3D object points for the chessboard pattern (needed for pose estimation)
+        // create 3D object points for the chessboard pattern (needed for pose estimation)
         fsiv_create_chessboard_3d_points(pattern_size, params.square, object_points);
         std::cout << "Created " << object_points.size() << " 3D object points for chessboard pattern" << std::endl;
 
-        // Prepare undistort maps once (for efficiency in real-time processing)
+        // prepare undistort maps once (for efficiency in real-time processing)
         cv::Size image_size = cv::Size(static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH)),
                                        static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT)));
         fsiv_prepare_undistort_maps(camera_matrix, dist_coeffs, image_size, map1, map2);
         std::cout << "Prepared undistort maps for image size: " << image_size.width << "x" << image_size.height << std::endl;
-        // Initialize drawing state based on --draw parameter
+        // initialize drawing state based on --draw parameter
         if (params.draw == "axes") {
             draw_axes = true;
         } else if (params.draw == "cube") {
@@ -183,7 +185,7 @@ int main(int argc, char** argv)
         {
             // end of file or camera error
             if (params.use_video) break;
-            else continue; // try again for cameras
+            else continue;
         }
 
         if (params.calibrate)
@@ -203,7 +205,7 @@ int main(int argc, char** argv)
             if (key == 27){ //ESC: exit
                 break;
             }else if (key == ' ' && found) {  // SPACE: store view
-                // refine corners with subpix accuracy
+                // refine corners with subpix
                 std::vector<cv::Point2f> refined_corners = corners_tmp;
                 if (!refined_corners.empty()) {
                     cv::Mat gray_for_refine;
@@ -213,13 +215,13 @@ int main(int argc, char** argv)
                 }
                 
                 // store this view
-                object_points_list.push_back(object_points);  // Same 3D points for all views
-                image_points_list.push_back(refined_corners);  // Different 2D corners per view
+                object_points_list.push_back(object_points);  // store 3d points for all views
+                image_points_list.push_back(refined_corners);  // store 2d points for each view separately
                 
                 std::cout << "Stored view " << object_points_list.size() << std::endl;
-            }else if (key == 'd') {  // press d and toggle corner drawing
+            }else if (key == 'd') {  // toggle corner drawing
                 draw_corners = !draw_corners;
-            }else if (key == 'c') {  // press c and run calibration
+            }else if (key == 'c') {  // run calibration
                 if (object_points_list.size() < 8){
                     std::cerr << "calibration needs at least 8 views, current views: " << object_points_list.size() << std::endl;
 
@@ -234,9 +236,9 @@ int main(int argc, char** argv)
                         rvecs, tvecs, camera_matrix, dist_coeffs);
 
                     // print calibration results
-                    std::cout << "Calibration completed!" << std::endl;
-                    std::cout << "RMS error: " << rms << std::endl;
-                    std::cout << "Mean reprojection error: " << mean_error << std::endl;
+                    std::cout << "calibration completed" << std::endl;
+                    std::cout << "RMS error:" << rms << std::endl;
+                    std::cout << "Mean reprojection error:" << mean_error << std::endl;
 
                     // save calibration to file
                     if (fsiv_save_calibration(params.out, camera_matrix, dist_coeffs, img_size, mean_error)) {
@@ -297,11 +299,11 @@ int main(int argc, char** argv)
                 break;
             } else if (key == 'a') {  // toggle/force draw axes
                 draw_axes = !draw_axes;
-                draw_cube = false;  // Only one overlay at a time
+                draw_cube = false;  //turn off cube
                 std::cout << "Axes overlay: " << (draw_axes ? "ON" : "OFF") << std::endl;
             } else if (key == 'u') {  // toggle/force draw cube
                 draw_cube = !draw_cube;
-                draw_axes = false;  // Only one overlay
+                draw_axes = false;  //turn off axes
                 std::cout << "Cube overlay: " << (draw_cube ? "ON" : "OFF") << std::endl;
             } else if (key == 's') {  // save screenshot
                 std::string filename = "screenshot_" + std::to_string(time(nullptr)) + ".png";
