@@ -162,6 +162,9 @@ bool fsiv_load_calibration(const std::string& path,
     fs["camera_matrix"] >> K;
     fs["distortion_coefficients"] >> dist;
 
+    if (dist.rows == 1 && dist.cols == 5) {
+        dist = dist.t();
+    }
     // close the file
     fs.release();
 
