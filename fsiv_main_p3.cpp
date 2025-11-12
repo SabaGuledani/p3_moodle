@@ -35,6 +35,7 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
+#include <ctime> 
 #include <cstdio>
 
 #include <opencv2/core.hpp>
@@ -133,7 +134,7 @@ int main(int argc, char** argv)
     bool draw_cube = false;   // Flag to draw cube overlay
 
     // Create pattern size and 3D object points (same for all views)
-    cv::Size pattern_size(params.cols-1, params.rows-1);
+    cv::Size pattern_size(params.cols, params.rows);
     std::vector<cv::Point3f> object_points;
     if (params.calibrate) {
         fsiv_create_chessboard_3d_points(pattern_size, params.square, object_points);
@@ -190,10 +191,6 @@ int main(int argc, char** argv)
             // make frame grayscale
             cv::Mat gray;
             cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-
-            // create the 3D points for the chessboard
-            // first create pattern size from rows and cols parameters
-            cv::Size pattern_size(params.cols-1, params.rows-1);
 
             // create empty vector corners_tmp
             std::vector<cv::Point2f> corners_tmp;
@@ -262,15 +259,60 @@ int main(int argc, char** argv)
 }
         else // AR mode
         {
-
+            // Step 2a: Undistort the frame using precomputed maps
+            cv::Mat undist;
+            fsiv_undistort_with_maps(frame, undist, map1, map2);
+            
+            // Step 2b: Detect chessboard corners in the undistorted frame
+            std::vector<cv::Point2f> corners;
+            bool found = fsiv_find_chessboard_corners(undist, pattern_size, corners, false);
+            
+            // Step 2c: If corners found, estimate pose and draw overlays
+            if (found) {
+                // Estimate camera pose relative to the chessboard
+                bool pnp_ok = fsiv_estimate_pose(object_points, corners, camera_matrix, dist_coeffs, rvec, tvec);
+                
+                if (pnp_ok) {
+                    // Draw overlays based on current drawing state
+                    if (draw_axes) {
+                        fsiv_draw_axes(undist, camera_matrix, dist_coeffs, rvec, tvec, params.square * 2.0f);
+                    }
+                    if (draw_cube) {
+                        fsiv_draw_cube(undist, camera_matrix, dist_coeffs, rvec, tvec, params.square);
+                    }
+                }
+            }
+            
+            // Copy undistorted frame (with overlays if drawn) to display
+            frame = undist.clone();
         }
         cv::imshow("FSIV P3", frame);
-        
-        // Wait for key press (30ms delay for video, 1ms for camera)
-        // ESC key (27) will exit
-        if (cv::waitKey(params.use_video ? 30 : 1) == 27) {
-            break;
+
+        // Step 2d: Handle keyboard input for AR mode
+        if (params.run) {
+            int key = cv::waitKey(params.use_video ? 30 : 1) & 0xFF;
+            if (key == 27) {  // ESC: exit
+                break;
+            } else if (key == 'a') {  // 'a': toggle/force draw axes
+                draw_axes = !draw_axes;
+                draw_cube = false;  // Only one overlay at a time
+                std::cout << "Axes overlay: " << (draw_axes ? "ON" : "OFF") << std::endl;
+            } else if (key == 'u') {  // 'u': toggle/force draw cube
+                draw_cube = !draw_cube;
+                draw_axes = false;  // Only one overlay at a time
+                std::cout << "Cube overlay: " << (draw_cube ? "ON" : "OFF") << std::endl;
+            } else if (key == 's') {  // 's': save screenshot
+                std::string filename = "screenshot_" + std::to_string(time(nullptr)) + ".png";
+                cv::imwrite(filename, frame);
+                std::cout << "Screenshot saved: " << filename << std::endl;
+            }
+        } else {
+            // For calibration mode, keep the existing waitKey
+            if (cv::waitKey(params.use_video ? 30 : 1) == 27) {
+                break;
+            }
         }
+        
     }
 
     cap.release();
