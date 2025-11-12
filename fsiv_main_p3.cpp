@@ -126,6 +126,12 @@ int main(int argc, char** argv)
     std::vector<cv::Mat> rvecs, tvecs;
     bool draw_corners = false;
 
+    // AR mode variables (declared here so they're accessible in the loop)
+    cv::Mat map1, map2;  // Undistort maps (prepared once, used many times)
+    cv::Mat rvec, tvec;   // Pose estimation vectors (rotation and translation)
+    bool draw_axes = false;   // Flag to draw axes overlay
+    bool draw_cube = false;   // Flag to draw cube overlay
+
     // Create pattern size and 3D object points (same for all views)
     cv::Size pattern_size(params.cols-1, params.rows-1);
     std::vector<cv::Point3f> object_points;
@@ -150,6 +156,23 @@ int main(int argc, char** argv)
         }
         
         std::cout << "Calibration loaded successfully from: " << params.params << std::endl;
+
+        // Create 3D object points for the chessboard pattern (needed for pose estimation)
+        fsiv_create_chessboard_3d_points(pattern_size, params.square, object_points);
+        std::cout << "Created " << object_points.size() << " 3D object points for chessboard pattern" << std::endl;
+
+        // Prepare undistort maps once (for efficiency in real-time processing)
+        cv::Size image_size = cv::Size(static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH)),
+                                       static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT)));
+        fsiv_prepare_undistort_maps(camera_matrix, dist_coeffs, image_size, map1, map2);
+        std::cout << "Prepared undistort maps for image size: " << image_size.width << "x" << image_size.height << std::endl;
+        // Initialize drawing state based on --draw parameter
+        if (params.draw == "axes") {
+            draw_axes = true;
+        } else if (params.draw == "cube") {
+            draw_cube = true;
+        }
+   
     }
     
     for (;;)
