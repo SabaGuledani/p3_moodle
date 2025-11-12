@@ -132,6 +132,7 @@ int main(int argc, char** argv)
     // AR mode variables
     cv::Mat map1, map2;  // Undistort maps
     cv::Mat rvec, tvec;   //rotation and translation vecttors 
+    cv::Mat zero_dist; // zero distortion coefficients for undistorted images
     bool draw_axes = false;   // flag to draw axes overlay
     bool draw_cube = false;   // flag to draw cube overlay
 
@@ -169,6 +170,7 @@ int main(int argc, char** argv)
                                        static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT)));
         fsiv_prepare_undistort_maps(camera_matrix, dist_coeffs, image_size, map1, map2);
         std::cout << "Prepared undistort maps for image size: " << image_size.width << "x" << image_size.height << std::endl;
+        zero_dist = cv::Mat::zeros(dist_coeffs.rows, dist_coeffs.cols, dist_coeffs.type());
         // initialize drawing state based on --draw parameter
         if (params.draw == "axes") {
             draw_axes = true;
@@ -274,15 +276,16 @@ int main(int argc, char** argv)
             // if corners found, estimate pose and draw overlays
             if (found) {
                 // estimate camera pose and check if it is ok
-                bool pnp_ok = fsiv_estimate_pose(object_points, corners, camera_matrix, dist_coeffs, rvec, tvec);
+                bool pnp_ok = fsiv_estimate_pose(object_points, corners, camera_matrix, zero_dist, rvec, tvec);
                 
                 if (pnp_ok) {
-                    // draw overlays based on current drawing state
+                    // draw overlays (cube or axes)
+                    // we use zero_dist since the image is already undistorted
                     if (draw_axes) {
-                        fsiv_draw_axes(undist, camera_matrix, dist_coeffs, rvec, tvec, params.square * 2.0f);
+                        fsiv_draw_axes(undist, camera_matrix, zero_dist, rvec, tvec, params.square * 2.0f);
                     }
                     if (draw_cube) {
-                        fsiv_draw_cube(undist, camera_matrix, dist_coeffs, rvec, tvec, params.square);
+                        fsiv_draw_cube(undist, camera_matrix, zero_dist, rvec, tvec, params.square);
                     }
                 }
             }
