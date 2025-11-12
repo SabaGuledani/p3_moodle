@@ -7,3 +7,4 @@ logitech/
 *.xml
 *.avi
 *.mp4
+!CMakeLists.txt
