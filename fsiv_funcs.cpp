@@ -137,7 +137,7 @@ bool fsiv_save_calibration(const std::string& path,
     fs << "image_width" << image_size.width;
     fs << "image_height" << image_size.height;
     fs << "camera_matrix" << K;
-    fs << "distortion_coefficients" << dist;
+    fs << "distortion_coefficients" << dist.t(); 
     fs << "error" << reproj_error;
 
     // close the file
@@ -180,12 +180,12 @@ bool fsiv_load_calibration(const std::string& path,
         std::cerr << "Error: Invalid camera matrix dimensions (expected 3x3)" << std::endl;
         return false;
     }
-    // validate distortion coefficients
-    if (dist.rows != 1 || (dist.cols != 5 && dist.cols != 1))
-    {
-        std::cerr << "Error: Invalid distortion coefficients dimensions (expected 1x5 or 5x1)" << std::endl;
-        return false;
-    }
+    // // validate distortion coefficients
+    // if (dist.rows != 1 || (dist.cols != 5 && dist.cols != 1))
+    // {
+    //     std::cerr << "Error: Invalid distortion coefficients dimensions (expected 1x5 or 5x1)" << std::endl;
+    //     return false;
+    // }
 
     return true;
 }
