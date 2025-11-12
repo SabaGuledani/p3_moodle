@@ -132,6 +132,25 @@ int main(int argc, char** argv)
     if (params.calibrate) {
         fsiv_create_chessboard_3d_points(pattern_size, params.square, object_points);
     }
+    // AR mode initialization
+    if (params.run) {
+        // Validate that calibration file path is provided
+        if (params.params.empty()) {
+            std::cerr << "Error: AR mode requires --params=<file.yml> to load calibration parameters." << std::endl;
+            print_help();
+            cap.release();
+            return 1;
+        }
+        
+        // Load calibration parameters from file
+        if (!fsiv_load_calibration(params.params, camera_matrix, dist_coeffs)) {
+            std::cerr << "Error: Failed to load calibration from " << params.params << std::endl;
+            cap.release();
+            return 1;
+        }
+        
+        std::cout << "Calibration loaded successfully from: " << params.params << std::endl;
+    }
     
     for (;;)
     {
