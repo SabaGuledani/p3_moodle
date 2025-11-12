@@ -259,34 +259,9 @@ int main(int argc, char** argv)
             }
 
             
-
-  /*
-                double rms = fsiv_calibrate_camera(all_object_points, all_image_points,
-                                                   image_size, camera_matrix, dist_coeffs,
-                                                   rvecs, tvecs);
-    */
-
-//                double mean_err = fsiv_compute_reprojection_error(all_object_points, all_image_points,
-//                                                                  rvecs, tvecs, camera_matrix, dist_coeffs);
-
-//                fsiv_save_calibration(out_path, camera_matrix, dist_coeffs, image_size, mean_err);
-
-        }
+}
         else // AR mode
         {
-            
-//                fsiv_prepare_undistort_maps(camera_matrix, dist_coeffs, image_size, map1, map2);
-
-//            fsiv_undistort_with_maps(frame, undist, map1, map2);
-
-
-//            bool found = fsiv_find_chessboard_corners(undist, pattern_size, corners, false);
-
-//                bool pnp_ok = fsiv_estimate_pose(obj_pts, corners, camera_matrix, dist_coeffs, rvec, tvec);
-
-//                        fsiv_draw_cube(undist, camera_matrix, dist_coeffs, rvec, tvec, (float)square_size);
-                    
-//                        fsiv_draw_axes(undist, camera_matrix, dist_coeffs, rvec, tvec, (float)square_size*2.0f);
 
         }
         cv::imshow("FSIV P3", frame);
