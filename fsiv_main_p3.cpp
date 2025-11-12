@@ -262,10 +262,12 @@ int main(int argc, char** argv)
             // undistort the frame with precomputed maps
             cv::Mat undist;
             fsiv_undistort_with_maps(frame, undist, map1, map2);
-            
-            // detect chessboard corners
+    
+            cv::Mat undist_gray;
+            cv::cvtColor(undist, undist_gray, cv::COLOR_BGR2GRAY);
+    
             std::vector<cv::Point2f> corners;
-            bool found = fsiv_find_chessboard_corners(undist, pattern_size, corners, false);
+            bool found = fsiv_find_chessboard_corners(undist_gray, pattern_size, corners, false);
             
             // if corners found, estimate pose and draw overlays
             if (found) {
