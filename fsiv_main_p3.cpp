@@ -181,7 +181,7 @@ int main(int argc, char** argv)
         cv::Mat frame;
         if (!cap.read(frame) || frame.empty())
         {
-            // End of file or camera error.
+            // end of file or camera error
             if (params.use_video) break;
             else continue; // try again for cameras
         }
@@ -203,7 +203,7 @@ int main(int argc, char** argv)
             if (key == 27){ //ESC: exit
                 break;
             }else if (key == ' ' && found) {  // SPACE: store view
-                // Refine corners with subpix accuracy
+                // refine corners with subpix accuracy
                 std::vector<cv::Point2f> refined_corners = corners_tmp;
                 if (!refined_corners.empty()) {
                     cv::Mat gray_for_refine;
@@ -212,7 +212,7 @@ int main(int argc, char** argv)
                     cv::cornerSubPix(gray_for_refine, refined_corners, cv::Size(11, 11), cv::Size(-1, -1), criteria);
                 }
                 
-                // Store this view
+                // store this view
                 object_points_list.push_back(object_points);  // Same 3D points for all views
                 image_points_list.push_back(refined_corners);  // Different 2D corners per view
                 
@@ -226,19 +226,19 @@ int main(int argc, char** argv)
                 }else{
                     cv::Size img_size = frame.size();
 
-                    //calibration
+                    // calibrate camera
                     double rms = fsiv_calibrate_camera(object_points_list, image_points_list,
                                                         img_size, camera_matrix, dist_coeffs, rvecs, tvecs);
-                    // Compute reprojection error
+                    // compute reprojection error
                     double mean_error = fsiv_compute_reprojection_error(object_points_list, image_points_list,
                         rvecs, tvecs, camera_matrix, dist_coeffs);
 
-                    // Print calibration results
+                    // print calibration results
                     std::cout << "Calibration completed!" << std::endl;
                     std::cout << "RMS error: " << rms << std::endl;
                     std::cout << "Mean reprojection error: " << mean_error << std::endl;
 
-                    // Save calibration to file
+                    // save calibration to file
                     if (fsiv_save_calibration(params.out, camera_matrix, dist_coeffs, img_size, mean_error)) {
                         std::cout << "Calibration saved to: " << params.out << std::endl;
                     } else {
@@ -249,7 +249,7 @@ int main(int argc, char** argv)
                     
                 }
 
-            }else if (key == 'r') {  // Reset stored views
+            }else if (key == 'r') {  // reset stored views
                 object_points_list.clear();
                 image_points_list.clear();
                 std::cout << "Reset: cleared all stored views" << std::endl;
@@ -259,21 +259,21 @@ int main(int argc, char** argv)
 }
         else // AR mode
         {
-            // Step 2a: Undistort the frame using precomputed maps
+            // undistort the frame with precomputed maps
             cv::Mat undist;
             fsiv_undistort_with_maps(frame, undist, map1, map2);
             
-            // Step 2b: Detect chessboard corners in the undistorted frame
+            // detect chessboard corners
             std::vector<cv::Point2f> corners;
             bool found = fsiv_find_chessboard_corners(undist, pattern_size, corners, false);
             
-            // Step 2c: If corners found, estimate pose and draw overlays
+            // if corners found, estimate pose and draw overlays
             if (found) {
-                // Estimate camera pose relative to the chessboard
+                // estimate camera pose and check if it is ok
                 bool pnp_ok = fsiv_estimate_pose(object_points, corners, camera_matrix, dist_coeffs, rvec, tvec);
                 
                 if (pnp_ok) {
-                    // Draw overlays based on current drawing state
+                    // draw overlays based on current drawing state
                     if (draw_axes) {
                         fsiv_draw_axes(undist, camera_matrix, dist_coeffs, rvec, tvec, params.square * 2.0f);
                     }
@@ -283,31 +283,31 @@ int main(int argc, char** argv)
                 }
             }
             
-            // Copy undistorted frame (with overlays if drawn) to display
+            // copy undistorted frame to display
             frame = undist.clone();
         }
         cv::imshow("FSIV P3", frame);
 
-        // Step 2d: Handle keyboard input for AR mode
+        // handle keyboard input for AR mode
         if (params.run) {
             int key = cv::waitKey(params.use_video ? 30 : 1) & 0xFF;
-            if (key == 27) {  // ESC: exit
+            if (key == 27) { 
                 break;
-            } else if (key == 'a') {  // 'a': toggle/force draw axes
+            } else if (key == 'a') {  // toggle/force draw axes
                 draw_axes = !draw_axes;
                 draw_cube = false;  // Only one overlay at a time
                 std::cout << "Axes overlay: " << (draw_axes ? "ON" : "OFF") << std::endl;
-            } else if (key == 'u') {  // 'u': toggle/force draw cube
+            } else if (key == 'u') {  // toggle/force draw cube
                 draw_cube = !draw_cube;
-                draw_axes = false;  // Only one overlay at a time
+                draw_axes = false;  // Only one overlay
                 std::cout << "Cube overlay: " << (draw_cube ? "ON" : "OFF") << std::endl;
-            } else if (key == 's') {  // 's': save screenshot
+            } else if (key == 's') {  // save screenshot
                 std::string filename = "screenshot_" + std::to_string(time(nullptr)) + ".png";
                 cv::imwrite(filename, frame);
                 std::cout << "Screenshot saved: " << filename << std::endl;
             }
         } else {
-            // For calibration mode, keep the existing waitKey
+
             if (cv::waitKey(params.use_video ? 30 : 1) == 27) {
                 break;
             }
