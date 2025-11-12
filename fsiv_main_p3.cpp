@@ -130,7 +130,7 @@ int main(int argc, char** argv)
     bool draw_corners = false;
 
     // AR mode variables
-    cv::Mat map1, map2;  // Undistort maps
+    cv::Mat map1, map2;  // undistort maps
     cv::Mat rvec, tvec;   //rotation and translation vecttors 
     cv::Mat zero_dist; // zero distortion coefficients for undistorted images
     bool draw_axes = false;   // flag to draw axes overlay
