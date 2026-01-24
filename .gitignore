@@ -9,3 +9,4 @@ logitech/
 *.mp4
 !CMakeLists.txt
 i52gugus
+*.zip
